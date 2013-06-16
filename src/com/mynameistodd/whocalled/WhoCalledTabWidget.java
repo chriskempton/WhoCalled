@@ -2,6 +2,7 @@ package com.mynameistodd.whocalled;
 
 import com.google.ads.AdRequest;
 import com.google.ads.AdView;
+import com.google.analytics.tracking.android.EasyTracker;
 
 import android.app.TabActivity;
 import android.content.Intent;
@@ -53,4 +54,17 @@ public class WhoCalledTabWidget extends TabActivity {
 		super.onDestroy();
 		adView.destroy();
 	}
+    
+    @Override
+    protected void onStart() {
+        super.onStart();
+        EasyTracker.getInstance().activityStart(this);
+        EasyTracker.getTracker().sendView("/whoCalled/callListTabs/");
+    }
+    
+    @Override
+    protected void onStop() {
+        super.onStop();
+        EasyTracker.getInstance().activityStop(this);
+    }
 }
