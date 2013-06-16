@@ -1,6 +1,6 @@
 package com.mynameistodd.whocalled;
 
-import com.google.android.apps.analytics.GoogleAnalyticsTracker;
+import com.google.analytics.tracking.android.EasyTracker;
 
 import android.app.Activity;
 import android.content.Context;
@@ -24,7 +24,6 @@ public class WhoCalled extends Activity {
 	String phoneNumber;
 	Intent callingIntent;
 	Context curContext;
-	GoogleAnalyticsTracker tracker;
 	private Util whoCalledUtil;
 	
     @Override
@@ -35,8 +34,6 @@ public class WhoCalled extends Activity {
         callingIntent = getIntent();
         curContext = getApplicationContext();
         whoCalledUtil = new Util(curContext);
-        tracker = GoogleAnalyticsTracker.getInstance();
-        tracker.startNewSession("UA-26489424-1", this);
         
         Log.d("mynameistodd", "onCreate called.");
     }
@@ -45,6 +42,7 @@ public class WhoCalled extends Activity {
     protected void onStart() {
         super.onStart();
         Log.d("mynameistodd", "onStarted called.");
+        EasyTracker.getInstance().activityStart(this);
         
         callerName = (TextView)findViewById(R.id.TextViewName);
         callerNumber = (TextView)findViewById(R.id.TextViewNumber);
@@ -68,16 +66,17 @@ public class WhoCalled extends Activity {
 				startActivityForResult(intent, 1);
 			}
 		});
-        tracker.trackPageView("/whoCalled/display/"+phoneNumber);
+        EasyTracker.getTracker().sendView("/whoCalled/display/"+phoneNumber);
     }
         
     @Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
+		EasyTracker.getInstance().setContext(this);
 		if (requestCode == 1 && resultCode == RESULT_OK)
 		{
 			Toast.makeText(curContext, "Submitted!", Toast.LENGTH_SHORT).show();
-			tracker.trackPageView("/whoCalled/submited/"+phoneNumber);
+			EasyTracker.getTracker().sendView("/whoCalled/submited/"+phoneNumber);
 		}
 		else
 		{
@@ -87,19 +86,18 @@ public class WhoCalled extends Activity {
 				response += data.getStringExtra("com.mynameistodd.whocalled.response");
 			}
 			Toast.makeText(curContext, response, Toast.LENGTH_LONG).show();
-			tracker.trackPageView("/whoCalled/error/"+phoneNumber);
+			EasyTracker.getTracker().sendView("/whoCalled/error/"+phoneNumber);
 		}
 	}
     
     @Override
     protected void onStop() {
         super.onStop();
-        tracker.dispatch();
+        EasyTracker.getInstance().activityStop(this);
     }
     
     @Override
     protected void onDestroy() {
     	super.onDestroy();
-    	tracker.stopSession();
     }
 }

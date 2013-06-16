@@ -1,6 +1,7 @@
 package com.mynameistodd.whocalled;
 
-import com.google.android.apps.analytics.GoogleAnalyticsTracker;
+import com.google.analytics.tracking.android.EasyTracker;
+import com.google.analytics.tracking.android.Tracker;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -32,20 +33,19 @@ public class MissedCallsList extends ListActivity {
 	private Context curContext;
 	public String number;
 	String result = "";
-	GoogleAnalyticsTracker tracker;
 	ProgressDialog progressDialog;
 	private Util whoCalledUtil;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.list_view);
+        EasyTracker.getInstance().activityStart(this);
+        Tracker tracker = EasyTracker.getTracker();
+
+        setContentView(R.layout.list_view);
 		
 		curContext = this;
 		whoCalledUtil = new Util(curContext);
-		
-		tracker = GoogleAnalyticsTracker.getInstance();
-		tracker.startNewSession("UA-26489424-1", this);
 		
 		Intent intent = getIntent();
 		int callType = intent.getIntExtra("com.mynameistodd.whocalled.calllist", 0);
@@ -55,15 +55,15 @@ public class MissedCallsList extends ListActivity {
 		default:
 		case 1:
 			selection += CallLog.Calls.MISSED_TYPE;
-			tracker.trackPageView("/callList/view/missed");
+			tracker.sendView("/callList/view/missed");
 			break;
 		case 2:
 			selection += CallLog.Calls.OUTGOING_TYPE;
-			tracker.trackPageView("/callList/view/outgoing");
+			tracker.sendView("/callList/view/outgoing");
 			break;
 		case 3:
 			selection += CallLog.Calls.INCOMING_TYPE;
-			tracker.trackPageView("/callList/view/incoming");
+			tracker.sendView("/callList/view/incoming");
 			break;
 		}
 		
@@ -148,10 +148,13 @@ public class MissedCallsList extends ListActivity {
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
+		EasyTracker.getInstance().setContext(this);
+		Tracker tracker = EasyTracker.getTracker();
+
 		if (requestCode == 1 && resultCode == RESULT_OK)
 		{
 			Toast.makeText(curContext, "Submitted!", Toast.LENGTH_SHORT).show();
-			tracker.trackPageView("/callList/submited/"+number);
+			tracker.sendView("/callList/submited/"+number);
 		}
 		else
 		{
@@ -161,13 +164,14 @@ public class MissedCallsList extends ListActivity {
 				response += data.getStringExtra("com.mynameistodd.whocalled.response");
 			}
 			Toast.makeText(curContext, response, Toast.LENGTH_LONG).show();
-			tracker.trackPageView("/callList/error/"+number);
+			tracker.sendView("/callList/error/"+number);
 		}
 	}
 	
 	public void showDialog(String who)
-	{        
-        tracker.trackPageView("/callList/click/"+number);
+	{
+		EasyTracker.getInstance().setContext(this);
+        EasyTracker.getTracker().sendView("/callList/click/"+number);
 
 		AlertDialog.Builder dialog = new AlertDialog.Builder(curContext);
 		dialog.setTitle("Most Popular Response");
@@ -189,13 +193,11 @@ public class MissedCallsList extends ListActivity {
 	@Override
 	protected void onStop() {
 		super.onStop();
-		boolean result = tracker.dispatch();
-		Log.d("mynameistodd", "analytics submitted: " + result);
+		EasyTracker.getInstance().activityStop(this);
 	}
 	
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		tracker.stopSession();
 	}
 }
